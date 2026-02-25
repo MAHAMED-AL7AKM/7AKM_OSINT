@@ -1,0 +1,11 @@
+requests
+colorama
+prettytable
+python-dotenv
+dnspython
+python-whois
+Pillow
+PyPDF2
+mutagen
+faker
+phonenumbers
