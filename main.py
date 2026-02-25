@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os
+import subprocess
 from colorama import Fore, Style, init
 from utils.banner import show_banner
 from modules import (
@@ -16,7 +17,7 @@ def clear_screen():
 
 def print_menu():
     print(Fore.CYAN + "\n" + "="*60)
-    print(Fore.YELLOW + "                    MAIN MENU")
+    print(Fore.YELLOW + "                7AKM OSINT 💀🔥 MAIN MENU")
     print(Fore.CYAN + "="*60)
     menu_options = [
         ("1", "👤 Username Search (Social Media)"),
@@ -30,6 +31,8 @@ def print_menu():
         ("9", "🆔 Generate Fake Identity (with photo)"),
         ("10", "🎲 Generate Usernames (Telegram/Instagram) - بدون API"),
         ("11", "🤖 AI Chat with Identity (requires Gemini API key)"),
+        ("12", "🔄 Update Tool (git pull)"),
+        ("13", "ℹ️ Developer Info"),
         ("0", "❌ Exit")
     ]
     for num, desc in menu_options:
@@ -38,6 +41,42 @@ def print_menu():
 
 def get_target_input(prompt_text):
     return input(Fore.MAGENTA + prompt_text + Style.RESET_ALL).strip()
+
+def update_tool():
+    print(Fore.YELLOW + "[*] Checking for updates..." + Style.RESET_ALL)
+    try:
+        # Run git pull
+        result = subprocess.run(['git', 'pull'], capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
+        if result.returncode == 0:
+            print(Fore.GREEN + "[+] Update successful!" + Style.RESET_ALL)
+            print(result.stdout)
+        else:
+            print(Fore.RED + "[!] Update failed:" + Style.RESET_ALL)
+            print(result.stderr)
+    except Exception as e:
+        print(Fore.RED + f"[!] Error: {e}" + Style.RESET_ALL)
+    input(Fore.CYAN + "\nPress Enter to continue..." + Style.RESET_ALL)
+
+def developer_info():
+    info = f"""
+{Fore.CYAN}═══════════════════════════════════════════
+{Fore.YELLOW}            DEVELOPER INFORMATION
+{Fore.CYAN}═══════════════════════════════════════════
+
+{Fore.GREEN}🔹 Tool Name    : {Fore.WHITE}7AKM OSINT 💀🔥
+{Fore.GREEN}🔹 Version      : {Fore.WHITE}4.0
+{Fore.GREEN}🔹 Developer    : {Fore.WHITE}MAHAMED-AL7AKM
+{Fore.GREEN}🔹 Telegram     : {Fore.WHITE}@G_X_V_7
+{Fore.GREEN}🔹 GitHub       : {Fore.WHITE}https://github.com/MAHAMED-AL7AKM/7AKM_OSINT
+{Fore.GREEN}🔹 Description  : {Fore.WHITE}Ultimate OSINT tool for Termux
+{Fore.GREEN}🔹 Modules      : {Fore.WHITE}11 OSINT tools + Fake Identity + AI Chat
+
+{Fore.CYAN}═══════════════════════════════════════════
+{Fore.YELLOW}        Thanks for using 7AKM OSINT! 💀🔥
+{Fore.CYAN}═══════════════════════════════════════════
+    """
+    print(info)
+    input(Fore.CYAN + "\nPress Enter to continue..." + Style.RESET_ALL)
 
 def main():
     while True:
@@ -83,6 +122,12 @@ def main():
                 print(Fore.RED + "❌ Identity not found! Generate one first (option 9).")
                 input(Fore.CYAN + "\nPress Enter to continue...")
                 continue
+        elif choice == "12":
+            update_tool()
+            continue
+        elif choice == "13":
+            developer_info()
+            continue
         else:
             print(Fore.RED + "❌ Invalid choice!")
             input(Fore.CYAN + "\nPress Enter to continue...")
