@@ -5,34 +5,54 @@ import time
 from colorama import Fore, Style
 
 def check_telegram(username):
+    """Check if Telegram username is available"""
     url = f"https://t.me/{username}"
     try:
         response = requests.get(url, timeout=5, allow_redirects=True)
+        # If user doesn't exist, Telegram returns 404
         if response.status_code == 404:
             return True
+        # Sometimes returns 302 (redirect) if exists, but better check content
         if "tgme_page" in response.text and "If you have Telegram" in response.text:
-            return True
+            return True  # Not found
         return False
     except:
         return False
 
 def check_instagram(username):
+    """Check if Instagram username is available"""
     url = f"https://instagram.com/{username}"
     try:
         response = requests.get(url, timeout=5, allow_redirects=True)
+        # Instagram returns 404 if account doesn't exist
         if response.status_code == 404:
             return True
+        # Sometimes returns 200 with "Page Not Found" text
         if "page not found" in response.text.lower():
             return True
         return False
     except:
         return False
 
-def generate_username(length):
+def generate_username_double_dot():
+    """Generate username like y__u. (double dot style)"""
+    # Pattern: letter + '__' + letter + '.'
+    letters = string.ascii_lowercase
+    return f"{random.choice(letters)}__{random.choice(letters)}."
+
+def generate_username_triple_dot():
+    """Generate username like v_x__n. (triple dot style)"""
+    # Pattern: letter + '_' + letter + '__' + letter + '.'
+    letters = string.ascii_lowercase
+    return f"{random.choice(letters)}_{random.choice(letters)}__{random.choice(letters)}."
+
+def generate_username_random(length):
+    """Generate random username of given length (letters+digits)"""
     chars = string.ascii_lowercase + string.digits
     return ''.join(random.choice(chars) for _ in range(length))
 
 def send_to_telegram(bot_token, chat_id, message):
+    """Send message via Telegram bot (optional)"""
     if not bot_token or not chat_id:
         return False
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -48,9 +68,10 @@ def send_to_telegram(bot_token, chat_id, message):
         return False
 
 def main():
-    print(Fore.YELLOW + "[*] Username Generator (Telegram/Instagram) - بدون API" + Style.RESET_ALL)
+    print(Fore.YELLOW + "[*] Username Generator (Telegram/Instagram) - No API required" + Style.RESET_ALL)
     print(Fore.CYAN + "="*50)
     
+    # Choose platform
     print("Choose platform:")
     print("1. Telegram only")
     print("2. Instagram only")
@@ -60,43 +81,57 @@ def main():
         print(Fore.RED + "Invalid choice.")
         return
     
-    print(Fore.CYAN + "\nChoose username length:")
-    print("1. 3 characters (triple)")
-    print("2. 4 characters (quad)")
-    print("3. Custom range (e.g., 5-8)")
-    length_choice = input(Fore.MAGENTA + "Enter choice (1/2/3): ").strip()
+    # Choose username pattern
+    print(Fore.CYAN + "\nChoose username pattern:")
+    print("1. Double-dot style (e.g., y__u.)")
+    print("2. Triple-dot style (e.g., v_x__n.)")
+    print("3. Random letters/numbers (e.g., xczxvcz)")
+    print("4. Custom length (3-8 characters)")
+    pattern_choice = input(Fore.MAGENTA + "Enter choice (1/2/3/4): ").strip()
     
-    if length_choice == '1':
-        min_len = max_len = 3
-    elif length_choice == '2':
-        min_len = max_len = 4
-    elif length_choice == '3':
-        range_input = input("Enter min and max (e.g., 5-8): ").strip()
+    # Determine how to generate usernames based on pattern
+    if pattern_choice == '1':
+        generate_func = generate_username_double_dot
+        description = "double-dot"
+    elif pattern_choice == '2':
+        generate_func = generate_username_triple_dot
+        description = "triple-dot"
+    elif pattern_choice == '3':
+        # Random with variable length (3-8)
+        generate_func = lambda: generate_username_random(random.randint(3, 8))
+        description = "random length (3-8)"
+    elif pattern_choice == '4':
         try:
-            min_len, max_len = map(int, range_input.split('-'))
+            custom_len = int(input("Enter exact length (3-8): ").strip())
+            if custom_len < 3 or custom_len > 8:
+                print(Fore.RED + "Length must be between 3 and 8. Using 5.")
+                custom_len = 5
         except:
-            print(Fore.RED + "Invalid range. Using 5-5.")
-            min_len = max_len = 5
+            print(Fore.RED + "Invalid input. Using length 5.")
+            custom_len = 5
+        generate_func = lambda: generate_username_random(custom_len)
+        description = f"fixed length {custom_len}"
     else:
         print(Fore.RED + "Invalid choice.")
         return
     
+    # Number of usernames to check
     try:
-        count = int(input(Fore.MAGENTA + "\nHow many usernames to check? (default 20): ") or "20")
+        count = int(input(Fore.MAGENTA + "\nHow many usernames to generate? (default 20): ") or "20")
     except:
         count = 20
     
+    # Telegram bot settings (optional)
     bot_token = input(Fore.MAGENTA + "Enter Telegram bot token (leave blank to skip): ").strip()
     chat_id = input(Fore.MAGENTA + "Enter Telegram chat ID (leave blank to skip): ").strip()
     
-    print(Fore.GREEN + f"\n[+] Generating and checking {count} usernames...")
+    print(Fore.GREEN + f"\n[+] Generating and checking {count} usernames ({description} style)...")
     print(Fore.CYAN + "This may take a while (with 1s delay between checks).\n")
     
     available = []
     
     for i in range(count):
-        length = random.randint(min_len, max_len)
-        username = generate_username(length)
+        username = generate_func()
         
         status = ""
         tg_avail = ig_avail = False
@@ -113,8 +148,8 @@ def main():
            (platform_choice == '3' and (tg_avail or ig_avail)):
             available.append((username, tg_avail, ig_avail))
         
-        print(f"{i+1:2d}. {username:10s} {status}")
-        time.sleep(1)
+        print(f"{i+1:2d}. {username:15s} {status}")
+        time.sleep(1)  # Avoid rate limiting
     
     if available:
         print(Fore.GREEN + f"\n[+] Found {len(available)} available username(s):")
@@ -141,3 +176,6 @@ def main():
             send_to_telegram(bot_token, chat_id, "No available usernames found this time.")
     
     print(Fore.CYAN + "\nDone.")
+
+if __name__ == "__main__":
+    main()
