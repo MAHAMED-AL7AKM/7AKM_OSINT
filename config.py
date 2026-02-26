@@ -6,8 +6,9 @@ load_dotenv()
 # Gemini API
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# المجلد الرئيسي على الذاكرة الداخلية (بجانب Download)
-SHARED_DIR = "/storage/emulated/0/7AKM OSINT"
+# المسار الصحيح للذاكرة الخارجية عبر Termux
+BASE_DIR = os.path.expanduser("~/storage/shared")
+SHARED_DIR = os.path.join(BASE_DIR, "7AKM OSINT")
 
 # المجلدات الفرعية
 REPORTS_DIR = os.path.join(SHARED_DIR, "reports")
@@ -18,4 +19,5 @@ os.makedirs(SHARED_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
 os.makedirs(IDENTITIES_DIR, exist_ok=True)
 
-print(f"[✓] Shared directory: {SHARED_DIR}")  # للتأكيد (يمكن إزالته لاحقاً)
+# تأكيد المسار (اختياري)
+print(f"[✓] Shared directory: {SHARED_DIR}")
