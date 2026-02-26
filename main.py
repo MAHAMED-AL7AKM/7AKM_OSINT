@@ -7,7 +7,8 @@ from utils.banner import show_banner
 from modules import (
     username_lookup, ip_lookup, domain_lookup, phone_lookup,
     metadata_extract, url_analyzer, crypto_lookup, port_scan,
-    fake_identity, username_generator, ai_chat, fake_page, ip_attacks
+    fake_identity, username_generator, ai_chat, fake_page, ip_attacks,
+    safeum_generator  # الوحدة الجديدة
 )
 from config import REPORTS_DIR
 
@@ -36,6 +37,7 @@ def print_menu():
         ("13", "ℹ️ Developer Info"),
         ("14", "🌐 Create Fake Page (Educational Purpose)"),
         ("15", "⚔️ IP Attacks (Educational - UDP Flood/Port Exhaustion/Router Attack)"),
+        ("16", "🆕 Safeum Account Generator"),
         ("0", "❌ Exit")
     ]
     for num, desc in menu_options:
@@ -71,7 +73,7 @@ def developer_info():
 {Fore.GREEN}🔹 Telegram     : {Fore.WHITE}@G_X_V_7
 {Fore.GREEN}🔹 GitHub       : {Fore.WHITE}https://github.com/MAHAMED-AL7AKM/7AKM_OSINT
 {Fore.GREEN}🔹 Description  : {Fore.WHITE}Ultimate OSINT tool for Termux
-{Fore.GREEN}🔹 Modules      : {Fore.WHITE}15 tools + Fake Identity + AI Chat
+{Fore.GREEN}🔹 Modules      : {Fore.WHITE}16 tools + Fake Identity + AI Chat
 
 {Fore.CYAN}═══════════════════════════════════════════
 {Fore.YELLOW}        Thanks for using 7AKM OSINT! 💀🔥
@@ -133,6 +135,9 @@ def main():
             continue
         elif choice == "15":
             ip_attacks.main()
+            continue
+        elif choice == "16":
+            safeum_generator.main()
             continue
         else:
             print(Fore.RED + "❌ Invalid choice!")
