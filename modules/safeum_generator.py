@@ -23,7 +23,7 @@ running = True
 ch = 'qwertyuioplkjhgfdsazxcvbnm'
 
 # توقيع الأداة
-TOOL_SIGNATURE = "-Tool 7AKM OSINT - - Developer : @G_X_V_7"
+TOOL_SIGNATURE = "-Tool 7AKM OSINT               - Developer : @G_X_V_7"
 
 def generate_username():
     """توليد اسم مستخدم عشوائي"""
