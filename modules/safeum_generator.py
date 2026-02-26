@@ -36,10 +36,10 @@ def create_account(bot_token, chat_id):
     username = generate_username()
     
     # رسالة التليجرام مع التوقيع
-    telegram_message = f"""🎉 New Safeum Account Created 🎉
+    telegram_message = f""" افـرح يـسـطـا اكـونت  اهـوه 😂🫆
 
 Username: {username}
-Password: (not provided in script, check original)
+Password: hhhh
 
 {TOOL_SIGNATURE}"""
     
