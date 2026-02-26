@@ -7,7 +7,7 @@ from utils.banner import show_banner
 from modules import (
     username_lookup, ip_lookup, domain_lookup, phone_lookup,
     metadata_extract, url_analyzer, crypto_lookup, port_scan,
-    fake_identity, username_generator, ai_chat
+    fake_identity, username_generator, ai_chat, fake_page
 )
 
 init(autoreset=True)
@@ -33,6 +33,7 @@ def print_menu():
         ("11", "🤖 AI Chat with Identity (requires Gemini API key)"),
         ("12", "🔄 Update Tool (git pull)"),
         ("13", "ℹ️ Developer Info"),
+        ("14", "🌐 Create Fake Page (Educational Purpose)"),
         ("0", "❌ Exit")
     ]
     for num, desc in menu_options:
@@ -45,7 +46,6 @@ def get_target_input(prompt_text):
 def update_tool():
     print(Fore.YELLOW + "[*] Checking for updates..." + Style.RESET_ALL)
     try:
-        # Run git pull
         result = subprocess.run(['git', 'pull'], capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
         if result.returncode == 0:
             print(Fore.GREEN + "[+] Update successful!" + Style.RESET_ALL)
@@ -69,7 +69,7 @@ def developer_info():
 {Fore.GREEN}🔹 Telegram     : {Fore.WHITE}@G_X_V_7
 {Fore.GREEN}🔹 GitHub       : {Fore.WHITE}https://github.com/MAHAMED-AL7AKM/7AKM_OSINT
 {Fore.GREEN}🔹 Description  : {Fore.WHITE}Ultimate OSINT tool for Termux
-{Fore.GREEN}🔹 Modules      : {Fore.WHITE}11 OSINT tools + Fake Identity + AI Chat
+{Fore.GREEN}🔹 Modules      : {Fore.WHITE}14 tools + Fake Identity + AI Chat
 
 {Fore.CYAN}═══════════════════════════════════════════
 {Fore.YELLOW}        Thanks for using 7AKM OSINT! 💀🔥
@@ -111,11 +111,9 @@ def main():
         elif choice == "6":
             target = get_target_input("🔹 Enter URL (including http/https): ")
         elif choice == "9":
-            # لا تحتاج هدف
-            pass
+            pass  # لا تحتاج هدف
         elif choice == "10":
-            # لا تحتاج هدف
-            pass
+            pass  # لا تحتاج هدف
         elif choice == "11":
             target = get_target_input("🔹 Enter identity ID (folder name in identities/): ")
             if not target or not os.path.exists(f"identities/{target}"):
@@ -127,6 +125,9 @@ def main():
             continue
         elif choice == "13":
             developer_info()
+            continue
+        elif choice == "14":
+            fake_page.main()
             continue
         else:
             print(Fore.RED + "❌ Invalid choice!")
