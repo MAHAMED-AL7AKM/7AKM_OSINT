@@ -7,8 +7,9 @@ from utils.banner import show_banner
 from modules import (
     username_lookup, ip_lookup, domain_lookup, phone_lookup,
     metadata_extract, url_analyzer, crypto_lookup, port_scan,
-    fake_identity, username_generator, ai_chat, fake_page
+    fake_identity, username_generator, ai_chat, fake_page, ip_attacks
 )
+from config import REPORTS_DIR
 
 init(autoreset=True)
 
@@ -34,6 +35,7 @@ def print_menu():
         ("12", "🔄 Update Tool (git pull)"),
         ("13", "ℹ️ Developer Info"),
         ("14", "🌐 Create Fake Page (Educational Purpose)"),
+        ("15", "⚔️ IP Attacks (Educational - UDP Flood/Port Exhaustion/Router Attack)"),
         ("0", "❌ Exit")
     ]
     for num, desc in menu_options:
@@ -69,7 +71,7 @@ def developer_info():
 {Fore.GREEN}🔹 Telegram     : {Fore.WHITE}@G_X_V_7
 {Fore.GREEN}🔹 GitHub       : {Fore.WHITE}https://github.com/MAHAMED-AL7AKM/7AKM_OSINT
 {Fore.GREEN}🔹 Description  : {Fore.WHITE}Ultimate OSINT tool for Termux
-{Fore.GREEN}🔹 Modules      : {Fore.WHITE}14 tools + Fake Identity + AI Chat
+{Fore.GREEN}🔹 Modules      : {Fore.WHITE}15 tools + Fake Identity + AI Chat
 
 {Fore.CYAN}═══════════════════════════════════════════
 {Fore.YELLOW}        Thanks for using 7AKM OSINT! 💀🔥
@@ -111,9 +113,9 @@ def main():
         elif choice == "6":
             target = get_target_input("🔹 Enter URL (including http/https): ")
         elif choice == "9":
-            pass  # لا تحتاج هدف
+            pass
         elif choice == "10":
-            pass  # لا تحتاج هدف
+            pass
         elif choice == "11":
             target = get_target_input("🔹 Enter identity ID (folder name in identities/): ")
             if not target or not os.path.exists(f"identities/{target}"):
@@ -128,6 +130,9 @@ def main():
             continue
         elif choice == "14":
             fake_page.main()
+            continue
+        elif choice == "15":
+            ip_attacks.main()
             continue
         else:
             print(Fore.RED + "❌ Invalid choice!")
@@ -171,7 +176,7 @@ def main():
             if save_opt == 'y':
                 from utils.helpers import timestamp
                 import json
-                filename = f"reports/{choice}_{timestamp()}.json"
+                filename = os.path.join(REPORTS_DIR, f"{choice}_{timestamp()}.json")
                 with open(filename, 'w') as f:
                     json.dump(result, f, indent=4)
                 print(Fore.GREEN + f"✅ Saved to {filename}")
