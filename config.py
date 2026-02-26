@@ -6,11 +6,16 @@ load_dotenv()
 # Gemini API
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# إعدادات المجلدات
-OUTPUT_DIR = "reports"
-IDENTITIES_DIR = "identities"
-REPORTS_DIR = "reports"   # هذا المتغير المطلوب
+# المجلد الرئيسي على الذاكرة الخارجية (بجانب Downloads)
+SHARED_DIR = os.path.expanduser("~/storage/emulated/0/7AKM OSINT")
 
-# إنشاء المجلدات إذا لم تكن موجودة
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# المجلدات الفرعية
+REPORTS_DIR = os.path.join(SHARED_DIR, "reports")
+IDENTITIES_DIR = os.path.join(SHARED_DIR, "identities")
+
+# إنشاء جميع المجلدات إذا لم تكن موجودة
+os.makedirs(SHARED_DIR, exist_ok=True)
+os.makedirs(REPORTS_DIR, exist_ok=True)
 os.makedirs(IDENTITIES_DIR, exist_ok=True)
+
+print(f"[✓] Shared directory: {SHARED_DIR}")  # للتأكيد (يمكن إزالته لاحقاً)
