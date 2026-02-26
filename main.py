@@ -37,7 +37,7 @@ def print_menu():
         ("13", "ℹ️ Developer Info"),
         ("14", "🌐 Create Fake Page (Educational Purpose)"),
         ("15", "⚔️ IP Attacks (Educational - UDP Flood/Port Exhaustion/Router Attack)"),
-        ("16", "🆕 7AKM Safeum"),
+        ("16", "🆕 Safeum Account Generator"),
         ("0", "❌ Exit")
     ]
     for num, desc in menu_options:
