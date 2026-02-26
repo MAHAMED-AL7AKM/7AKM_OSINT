@@ -6,8 +6,8 @@ load_dotenv()
 # Gemini API
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# المجلد الرئيسي على الذاكرة الخارجية (بجانب Downloads)
-SHARED_DIR = os.path.expanduser("~/storage/emulated/0/7AKM OSINT")
+# المجلد الرئيسي على الذاكرة الداخلية (بجانب Download)
+SHARED_DIR = "/storage/emulated/0/7AKM OSINT"
 
 # المجلدات الفرعية
 REPORTS_DIR = os.path.join(SHARED_DIR, "reports")
