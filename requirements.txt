@@ -10,3 +10,5 @@ mutagen
 faker
 phonenumbers
 websocket-client
+python-telegram-bot
+cryptography
