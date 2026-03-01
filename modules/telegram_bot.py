@@ -2,8 +2,8 @@
 """
 Telegram Bot Module for 7AKM OSINT
 - Collects phone numbers from users and forwards to owner
-- Send encrypted files to Telegram using user-provided token and chat ID
-- File selection via file picker or manual path
+- Send encrypted files to Telegram with local copy saved in reports folder
+- Works in a loop until user chooses to return to main menu
 """
 
 import asyncio
@@ -12,12 +12,14 @@ import logging
 import os
 import subprocess
 from io import BytesIO
+from datetime import datetime
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
 from colorama import Fore, Style
 import base64
 from cryptography.fernet import Fernet
 import requests
+from config import REPORTS_DIR
 
 # إعداد التسجيل (إخفاء معظم الرسائل)
 logging.basicConfig(level=logging.ERROR)
@@ -150,7 +152,7 @@ def get_file_via_picker():
     return None
 
 def send_encrypted_file():
-    """إرسال ملف مشفر إلى تليجرام مباشرة (بدون حفظ) مع إضافة توقيع الأداة"""
+    """إرسال ملف مشفر إلى تليجرام مع حفظ نسخة محلية في reports"""
     print(Fore.YELLOW + "[*] Send Encrypted File to Telegram" + Style.RESET_ALL)
     print(Fore.RED + "⚠️  The file will be encrypted and sent to the specified chat." + Style.RESET_ALL)
 
@@ -196,15 +198,23 @@ def send_encrypted_file():
         file_data = f.read()
     encrypted_data = fernet.encrypt(file_data)
 
-    # إنشاء اسم ملف مع توقيع الأداة
+    # إنشاء اسم ملف مع توقيع الأداة وتاريخ
     original_name = os.path.basename(file_path)
-    encrypted_filename = f"{original_name}.encrypted_{TOOL_SIGNATURE.replace(' ', '_')}"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    encrypted_filename = f"encrypted_{original_name}_{timestamp}.enc"
+    
+    # حفظ الملف المشفر محلياً في مجلد reports
+    local_save_path = os.path.join(REPORTS_DIR, encrypted_filename)
+    with open(local_save_path, 'wb') as f:
+        f.write(encrypted_data)
+    print(Fore.GREEN + f"[+] Encrypted file saved locally: {local_save_path}" + Style.RESET_ALL)
 
-    # إرسال الملف المشفر مباشرة باستخدام BytesIO
+    # إرسال الملف المشفر إلى تليجرام
     url = f"https://api.telegram.org/bot{token}/sendDocument"
-    files = {'document': (encrypted_filename, BytesIO(encrypted_data), 'application/octet-stream')}
-    data = {'chat_id': chat_id}
-    response = requests.post(url, files=files, data=data)
+    with open(local_save_path, 'rb') as f:
+        files = {'document': (encrypted_filename, f, 'application/octet-stream')}
+        data = {'chat_id': chat_id}
+        response = requests.post(url, files=files, data=data)
 
     if response.status_code == 200:
         print(Fore.GREEN + "[+] File sent successfully!" + Style.RESET_ALL)
@@ -221,31 +231,38 @@ def send_encrypted_file():
         print(Fore.RED + f"[-] Failed to send file: {response.text}" + Style.RESET_ALL)
 
 def main():
-    print(Fore.YELLOW + "[*] Telegram Bot Module" + Style.RESET_ALL)
-    print(Fore.CYAN + "Choose an option:")
-    print("1. Run phone number collector bot")
-    print("2. Send encrypted file to Telegram")
-    choice = input(Fore.MAGENTA + "Enter choice (1/2): " + Style.RESET_ALL).strip()
+    while True:
+        print(Fore.YELLOW + "\n[*] Telegram Bot Module" + Style.RESET_ALL)
+        print(Fore.CYAN + "Choose an option:")
+        print("1. Run phone number collector bot")
+        print("2. Send encrypted file to Telegram")
+        print("0. Return to main menu")
+        choice = input(Fore.MAGENTA + "Enter choice: " + Style.RESET_ALL).strip()
 
-    if choice == "1":
-        token = input(Fore.MAGENTA + "Enter your bot token: " + Style.RESET_ALL).strip()
-        if not token:
-            print(Fore.RED + "❌ Token is required.")
-            return
-        try:
-            owner_id = int(input(Fore.MAGENTA + "Enter your Telegram chat ID (owner): " + Style.RESET_ALL).strip())
-        except ValueError:
-            print(Fore.RED + "❌ Invalid chat ID.")
-            return
-        bot = TelegramBot(token, owner_id)
-        bot.start()
-        print(Fore.CYAN + "\nBot is running. Press Enter to stop it and return to menu." + Style.RESET_ALL)
-        input()
-        bot.stop()
-    elif choice == "2":
-        send_encrypted_file()
-    else:
-        print(Fore.RED + "Invalid choice.")
+        if choice == "0":
+            print(Fore.GREEN + "Returning to main menu..." + Style.RESET_ALL)
+            break
+        elif choice == "1":
+            token = input(Fore.MAGENTA + "Enter your bot token: " + Style.RESET_ALL).strip()
+            if not token:
+                print(Fore.RED + "❌ Token is required.")
+                continue
+            try:
+                owner_id = int(input(Fore.MAGENTA + "Enter your Telegram chat ID (owner): " + Style.RESET_ALL).strip())
+            except ValueError:
+                print(Fore.RED + "❌ Invalid chat ID.")
+                continue
+            bot = TelegramBot(token, owner_id)
+            bot.start()
+            print(Fore.CYAN + "\nBot is running. Press Enter to stop it and return to this menu." + Style.RESET_ALL)
+            input()
+            bot.stop()
+        elif choice == "2":
+            send_encrypted_file()
+        else:
+            print(Fore.RED + "Invalid choice.")
+        
+        print(Fore.CYAN + "\n" + "="*50 + Style.RESET_ALL)
 
 if __name__ == "__main__":
     main()
